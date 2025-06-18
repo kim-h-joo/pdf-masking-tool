@@ -1,3 +1,5 @@
+# view.py
+
 import sys
 import os
 from pathlib import Path
@@ -21,19 +23,26 @@ class MyWindow(QMainWindow, form_class):
         self.setupUi(self)
         self.init_ui()
         self.processor = processor
+        self.qscene = None
+        self.qitem = None
+        self.connect_signals()
 
     def init_ui(self):
         self.setWindowTitle('PDF2IMG')
         self.setWindowIcon(QIcon(resource_path('icon.png')))
         self.stateLabel.setText("")
+        
+        # 리사이징 중심축을 뷰 중앙으로 설정
+        self.graphicsView.setResizeAnchor(self.graphicsView.AnchorViewCenter)
+        self.graphicsView.setTransformationAnchor(self.graphicsView.AnchorViewCenter)
 
     def connect_signals(self):
         # 파일 선택
-        self.openBT.clicked.connect(self.load_file())
+        self.openBT.clicked.connect(self.load_file)
         # 왼쪽 90도 회전
-        self.rotateBT_L.clicked.connect(self.rotate_left())
+        self.rotateBT_L.clicked.connect(self.rotate_left)
         # 오른쪽 90도 회전
-        self.rotateBT_R.clicked.connect(self.rotate_right())
+        self.rotateBT_R.clicked.connect(self.rotate_right)
         # 변환
         self.convertBT.clicked.connect(self.convert)
 
@@ -47,14 +56,22 @@ class MyWindow(QMainWindow, form_class):
         pixmap = self.processor.page_to_fpix(page)
         qpixmap = QPixmap()
         qpixmap.loadFromData(pixmap.tobytes("ppm"))
-        # if not qpixmap.loadFromData(pixmap.tobytes("ppm")):
-        #     self.msg_box("이미지를 로드할 수 없습니다.")
-        #     return
-        qscene = QGraphicsScene(self)
-        qitem = QGraphicsPixmapItem(qpixmap)
-        qscene.addItem(qitem)
-        self.graphicsView.setScene(qscene)
-        self.graphicsView.fitInView(qitem, Qt.KeepAspectRatio)
+        self.qscene = QGraphicsScene(self)
+        self.qitem = QGraphicsPixmapItem(qpixmap)
+        self.qscene.addItem(self.qitem)
+        self.graphicsView.setScene(self.qscene)
+        
+        self._fit_pixmap()
+    
+    def _fit_pixmap(self):
+        if self.qitem:
+            self.graphicsView.fitInView(self.qitem, Qt.KeepAspectRatio)
+    
+    def resizeEvent(self, event):
+        # PyQt event handler, Window의 크기가 변경될 때 자동으로 호출
+        # event loop가 resize event 감지 -> 내부적으로 resizeEvent(self, event)를 찾아 실행 (이름 변경 X)
+        super().resizeEvent(event) # 부모 클래스 resize도 수행 (super() : 부모 클래스 호출 시 사용)
+        self._fit_pixmap()
 
 
     def load_file(self):
@@ -77,3 +94,6 @@ class MyWindow(QMainWindow, form_class):
     def rotate_right(self):
         self.processor.change_degree(1)
         self.display_pixmap(self.processor.get_first_page())
+
+    def convert(self):
+        pass

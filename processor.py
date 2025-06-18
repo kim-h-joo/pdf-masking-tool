@@ -1,5 +1,5 @@
-import os
-import datetime
+# processor.py
+
 from PIL import Image, ImageDraw, ImageFilter
 import fitz
 
@@ -10,6 +10,8 @@ class PDFProcessor:
         self.first_page = None
         self.rotation_degree = 0
         self.images = []
+        self.start_point = (0, 0)
+        self.end_point = (0, 0)
 
     def get_first_page(self):
         return self.first_page
@@ -41,7 +43,9 @@ class PDFProcessor:
             self.images.append(img)
 
 def set_blur_region(self):
-    pass
+    self.start_point = (227,216)
+    self.end_point = (510,713)
+    
 
 def blur_img(self):
     pass
